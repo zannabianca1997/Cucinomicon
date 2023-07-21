@@ -12,8 +12,8 @@ use super::Markdown;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Zen {
-    title: Markdown,
-    rules: Vec<Rule>,
+    pub title: Markdown,
+    pub rules: Vec<Rule>,
 }
 impl Zen {
     pub(crate) fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
@@ -89,6 +89,6 @@ struct Metas {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Rule {
-    title: Markdown,
-    descr: Markdown,
+    pub title: Markdown,
+    pub descr: Markdown,
 }

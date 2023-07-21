@@ -8,7 +8,7 @@ use url::Url;
 use zen::Zen;
 
 #[derive(Debug, Clone)]
-pub struct Markdown(mdast::Node);
+pub struct Markdown(pub mdast::Node);
 impl Display for Markdown {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.0.to_string())
@@ -42,16 +42,25 @@ impl<'de> Deserialize<'de> for Markdown {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Book {
-    front_matter: FrontMatter,
-    introduction: Introduction,
+    pub front_matter: FrontMatter,
+    pub introduction: Introduction,
+}
+impl Book {
+    pub fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
+        log::info!("Loading book from {}", path.as_ref().display());
+        Ok(Self {
+            front_matter: FrontMatter::load(path.as_ref().join("front_matter.yml"))?,
+            introduction: Introduction::load(path.as_ref().join("introduction"))?,
+        })
+    }
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct FrontMatter {
-    title: Markdown,
-    subtitle: Markdown,
-    author: String,
-    email: Email,
-    site: Url,
+    pub title: Markdown,
+    pub subtitle: Markdown,
+    pub author: String,
+    pub email: Email,
+    pub site: Url,
 }
 impl FrontMatter {
     fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
@@ -64,10 +73,10 @@ impl FrontMatter {
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Introduction {
-    zen: Zen,
+    pub zen: Zen,
 }
 impl Introduction {
-    fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
+    pub fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         log::info!("Loading introduction from {}", path.as_ref().display());
         Ok(Self {
             zen: Zen::load(path.as_ref().join("zen.md"))?,
@@ -75,14 +84,4 @@ impl Introduction {
     }
 }
 
-mod zen;
-
-impl Book {
-    pub fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
-        log::info!("Loading book from {}", path.as_ref().display());
-        Ok(Self {
-            front_matter: FrontMatter::load(path.as_ref().join("front_matter.yml"))?,
-            introduction: Introduction::load(path.as_ref().join("introduction"))?,
-        })
-    }
-}
+pub mod zen;

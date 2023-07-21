@@ -3,4 +3,5 @@
 #![feature(drain_filter)]
 #![feature(never_type)]
 
-mod book;
+pub mod book;
+pub use book::Book;
