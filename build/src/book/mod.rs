@@ -49,8 +49,10 @@ impl Book {
     pub fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         log::info!("Loading book from {}", path.as_ref().display());
         Ok(Self {
-            front_matter: FrontMatter::load(path.as_ref().join("front_matter.yml"))?,
-            introduction: Introduction::load(path.as_ref().join("introduction"))?,
+            front_matter: FrontMatter::load(path.as_ref().join("front_matter.yml"))
+                .context("While loading `front_matter.yml`")?,
+            introduction: Introduction::load(path.as_ref().join("introduction"))
+                .context("While loading `introduction`")?,
         })
     }
 }
@@ -66,8 +68,8 @@ impl FrontMatter {
     fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         log::info!("Loading front matter from {}", path.as_ref().display());
         Ok(
-            serde_yaml::from_reader(File::open(path).context("Cannot open `front_matter.yml`")?)
-                .context("Cannot parse `front_matter.yml`")?,
+            serde_yaml::from_reader(File::open(path).context("Cannot open file")?)
+                .context("Cannot parse file")?,
         )
     }
 }
@@ -79,7 +81,7 @@ impl Introduction {
     pub fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         log::info!("Loading introduction from {}", path.as_ref().display());
         Ok(Self {
-            zen: Zen::load(path.as_ref().join("zen.md"))?,
+            zen: Zen::load(path.as_ref().join("zen.md")).context("While loading `zen.md`")?,
         })
     }
 }
