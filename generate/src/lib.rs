@@ -1,18 +1,6 @@
-use serde::{Deserialize, Serialize};
-use serde_email::Email;
-use url::Url;
+#![feature(const_trait_impl)]
+#![feature(result_flattening)]
+#![feature(drain_filter)]
+#![feature(never_type)]
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct Book {
-    front_matter: FrontMatter,
-}
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct FrontMatter {
-    title: String,
-    subtitle: String,
-    author: String,
-    email: Email,
-    site: Url,
-}
-
-impl Book {}
+mod book;
