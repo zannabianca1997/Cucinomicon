@@ -64,6 +64,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "630be753d4e58660abd17930c71b647fe46c27ea6b63cc59e1e3851406972e42"
 
 [[package]]
+name = "build-book"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "log",
+ "markdown",
+ "serde",
+ "serde-email",
+ "serde_yaml",
+ "simple_logger",
+ "url",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -170,21 +185,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a62bc1cf6f830c2ec14a513a9fb124d0a213a629668a4186f329db21fe045652"
 dependencies = [
  "percent-encoding",
-]
-
-[[package]]
-name = "generate"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "log",
- "markdown",
- "serde",
- "serde-email",
- "serde_yaml",
- "simple_logger",
- "url",
 ]
 
 [[package]]

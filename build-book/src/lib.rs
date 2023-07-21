@@ -5,3 +5,10 @@
 
 pub mod book;
 pub use book::Book;
+
+pub mod frontends {
+    mod tex {}
+    mod html {}
+    mod plain {}
+    mod md {}
+}
