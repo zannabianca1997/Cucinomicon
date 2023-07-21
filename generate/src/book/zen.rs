@@ -4,7 +4,6 @@ use std::path::Path;
 use anyhow::Context;
 use markdown::{
     mdast::{Heading, Node, Root, Yaml},
-    unist::Position,
     Constructs, ParseOptions,
 };
 use serde::{Deserialize, Serialize};
