@@ -12,3 +12,4 @@ serde = { version = "1.0.174", features = ["derive"] }
 serde-email = "2.1.0"
 serde_yaml = "0.9.25"
 simple_logger = "4.2.0"
+url = { version = "2.4.0", features = ["serde"] }

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_email::Email;
+use url::Url;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Book {
@@ -11,6 +12,7 @@ pub struct FrontMatter {
     subtitle: String,
     author: String,
     email: Email,
+    site: Url,
 }
 
 impl Book {}
