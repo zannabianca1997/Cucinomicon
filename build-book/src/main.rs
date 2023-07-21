@@ -2,8 +2,9 @@ use std::{io::stdout, path::PathBuf};
 
 use anyhow::Context;
 use clap::Parser;
-use generate::Book;
 use simple_logger::SimpleLogger;
+
+use build_book::Book;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]
