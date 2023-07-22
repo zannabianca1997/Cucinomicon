@@ -3,6 +3,7 @@
 use ::markdown::mdast::Node;
 
 pub mod headed_md;
+pub mod humantime_duration;
 pub mod markdown;
 pub mod title_separated_list;
 
