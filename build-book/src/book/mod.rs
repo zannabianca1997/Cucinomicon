@@ -26,6 +26,11 @@ impl Book {
                 .context("While loading `introduction`")?,
         })
     }
+    pub fn modified(&self) -> Option<DateTime<Utc>> {
+        let fm = self.front_matter.modified()?;
+        let int = self.introduction.modified()?;
+        Some(fm.max(int))
+    }
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct FrontMatter {
@@ -34,14 +39,30 @@ pub struct FrontMatter {
     pub author: String,
     pub email: Email,
     pub site: Url,
+    #[serde(skip_deserializing, skip_serializing_if = "Option::is_none")]
+    pub modified: Option<DateTime<Utc>>,
 }
 impl FrontMatter {
     fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         log::info!("Loading front matter from {}", path.as_ref().display());
-        Ok(
-            serde_yaml::from_reader(File::open(path).context("Cannot open file")?)
-                .context("Cannot parse file")?,
-        )
+        let f = File::open(&path).context("While opening file")?;
+        let mut frontmatters: FrontMatter =
+            serde_yaml::from_reader(&f).context("Cannot parse file")?;
+        frontmatters.modified = f
+            .metadata()
+            .and_then(|m| m.modified())
+            .inspect_err(|err| {
+                log::warn!(
+                    "Cannot read the modified time of {}: {err}",
+                    path.as_ref().display()
+                )
+            })
+            .ok()
+            .map(Into::into);
+        Ok(frontmatters)
+    }
+    pub fn modified(&self) -> Option<DateTime<Utc>> {
+        self.modified
     }
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -92,6 +113,21 @@ impl Introduction {
             warnings: load(path.as_ref(), "warnings.md").context("While loading warnings")?,
             thanks: load(path.as_ref(), "thanks.md").context("While loading thanks")?,
         })
+    }
+    pub fn modified(&self) -> Option<DateTime<Utc>> {
+        let mut modified = DateTime::<Utc>::MIN_UTC;
+        for time in [
+            &self.zen.metas.modified,
+            &self.prologue.metas.modified,
+            &self.warnings.metas.modified,
+            &self.thanks.metas.modified,
+        ] {
+            // fail if a time is missing
+            let time = *time.as_ref()?;
+            // keep highest time
+            modified = modified.max(time);
+        }
+        Some(modified)
     }
 }
 
