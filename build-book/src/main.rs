@@ -1,4 +1,4 @@
-use std::{io::stdout, path::PathBuf};
+use std::path::PathBuf;
 
 use anyhow::Context;
 use clap::Parser;
@@ -9,15 +9,11 @@ use build_book::{frontends::Frontend, Book};
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
+    /// Path to the book directory
+    input: PathBuf,
     /// What frontend to use
     #[command(subcommand)]
     frontend: Frontend,
-    /// Path to the book directory
-    #[clap(short, long)]
-    input: PathBuf,
-    /// Path to the output
-    #[clap(short, long)]
-    output: PathBuf,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -28,15 +24,11 @@ fn main() -> anyhow::Result<()> {
         .env()
         .init()
         .context("Cannot init logger")?;
-    let Args {
-        frontend,
-        input,
-        output,
-    } = Parser::parse();
+    let Args { frontend, input } = Parser::parse();
     log::info!("Reading book");
     let book = Book::load(input)?;
     log::info!("Writing output");
-    frontend.emit(book, output)?;
+    frontend.emit(book)?;
 
     Ok(())
 }

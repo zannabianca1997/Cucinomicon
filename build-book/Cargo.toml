@@ -3,7 +3,10 @@ name = "build-book"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+frontend-all = ["frontend-yaml", "frontend-html"]
+frontend-yaml = []
+frontend-html = ["dep:axohtml"]
 
 [dependencies]
 anyhow = "1.0.72"
@@ -19,4 +22,5 @@ serde = { version = "1.0.174", features = ["derive"] }
 serde-email = "2.1.0"
 serde_yaml = "0.9.25"
 simple_logger = "4.2.0"
+axohtml = { version = "0.5.0", optional = true }
 url = { version = "2.4.0", features = ["serde"] }
