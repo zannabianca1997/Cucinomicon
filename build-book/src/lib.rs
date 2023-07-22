@@ -3,6 +3,7 @@
 #![feature(drain_filter)]
 #![feature(never_type)]
 #![feature(iterator_try_collect)]
+#![feature(result_option_inspect)]
 
 pub mod book;
 pub use book::Book;

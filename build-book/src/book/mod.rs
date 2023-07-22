@@ -1,9 +1,7 @@
-use std::{
-    fs::{read_to_string, File},
-    path::Path,
-};
+use std::{fs::File, io::read_to_string, path::Path};
 
 use anyhow::Context;
+use chrono::{DateTime, Utc};
 use markdown::{Constructs, ParseOptions};
 use serde::{Deserialize, Serialize};
 use serde_email::Email;
@@ -57,25 +55,35 @@ impl Introduction {
     pub fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         log::info!("Loading introduction from {}", path.as_ref().display());
 
-        fn load<T: FromMd>(path: &Path, name: &str) -> anyhow::Result<T> {
+        fn load<T: FromMd>(path: &Path, name: &str) -> anyhow::Result<HeadedMarkdown<Metas, T>> {
             let path = path.join(name);
             log::debug!("Loading {}", path.display());
-            anyhow::Ok(
-                FromMd::parse(
-                    markdown::to_mdast(
-                        &read_to_string(path).context("While reading")?,
-                        &ParseOptions {
-                            constructs: Constructs {
-                                frontmatter: true, // needed to load the yaml too
-                                ..Default::default()
-                            },
+            let f = File::open(&path).context("While opening file")?;
+            let mut content: HeadedMarkdown<Metas, T> = FromMd::parse(
+                markdown::to_mdast(
+                    &read_to_string(&f).context("While reading file")?,
+                    &ParseOptions {
+                        constructs: Constructs {
+                            frontmatter: true, // needed to load the yaml too
                             ..Default::default()
                         },
-                    )
-                    .expect("Normal markdown should always parse"),
+                        ..Default::default()
+                    },
                 )
-                .expect("While parsing"),
+                .expect("Normal markdown should always parse"),
             )
+            .context("While parsing")?;
+            // adding modified date
+            content.metas.modified = f
+                .metadata()
+                .and_then(|m| m.modified())
+                .inspect_err(|err| {
+                    log::warn!("Cannot read the modified time of {}: {err}", path.display())
+                })
+                .ok()
+                .map(Into::into);
+
+            anyhow::Ok(content)
         }
 
         Ok(Self {
@@ -90,4 +98,6 @@ impl Introduction {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Metas {
     pub title: Markdown,
+    #[serde(skip_deserializing, skip_serializing_if = "Option::is_none")]
+    pub modified: Option<DateTime<Utc>>,
 }
