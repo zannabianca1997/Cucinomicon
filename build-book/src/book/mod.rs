@@ -33,9 +33,15 @@ impl Book {
                 .context("While loading `recipes`")?,
         })
     }
+
+    #[must_use]
     pub fn modified(&self) -> Option<DateTime<Utc>> {
-        let fm = self.front_matter.modified()?;
-        let int = self.introduction.modified()?;
-        Some(fm.max(int))
+        let mut max = DateTime::<Utc>::MIN_UTC;
+        max = max.max(self.front_matter.modified()?);
+        max = max.max(self.introduction.modified()?);
+        for (_, r) in &self.recipes {
+            max = max.max(r.modified()?)
+        }
+        Some(max)
     }
 }

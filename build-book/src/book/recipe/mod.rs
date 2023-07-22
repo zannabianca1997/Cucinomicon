@@ -1,13 +1,14 @@
 use std::{
     collections::BTreeMap,
-    fs::{read_dir, read_to_string},
+    fs::{read_dir, File},
+    io::read_to_string,
     mem,
     path::Path,
     str::FromStr,
 };
 
 use anyhow::{bail, Context};
-use chrono::Duration;
+use chrono::{DateTime, Duration, Utc};
 use lazy_regex::regex_captures;
 use markdown::{
     mdast::{Heading, List, Node, Root, Text},
@@ -25,6 +26,8 @@ pub struct Recipe {
     pub ingredients: Vec<Ingredient>,
     pub tools: Vec<Markdown>,
     pub tags: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub modified: Option<DateTime<Utc>>,
 
     pub descr: Markdown,
     pub preparazione: Vec<Markdown>,
@@ -52,9 +55,11 @@ impl Recipe {
     pub fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         log::info!("Loading recipe from {}", path.as_ref().display());
 
+        let f = File::open(path.as_ref()).context("Cannot open file")?;
+
         let HeadedMarkdown::<HumanHeader, HumanContent> { metas, content } = FromMd::parse(
             markdown::to_mdast(
-                &read_to_string(path).context("Cannot read file")?,
+                &read_to_string(&f).context("Cannot read file")?,
                 &ParseOptions {
                     constructs: Constructs {
                         frontmatter: true,
@@ -67,16 +72,33 @@ impl Recipe {
         )
         .context("While parsing")?;
 
+        let modified = f
+            .metadata()
+            .and_then(|m| m.modified())
+            .inspect_err(|err| {
+                log::warn!(
+                    "Cannot read the modified time of {}: {err}",
+                    path.as_ref().display()
+                )
+            })
+            .ok()
+            .map(Into::into);
+
         Ok(Self {
             name: metas.name,
             time: metas.time,
             ingredients: metas.ingredients.into_iter().map(Into::into).collect(),
             tools: metas.tools,
             tags: metas.tags,
+            modified,
             descr: content.descr,
             preparazione: content.preparazione,
             modifiche_e_aggiunte: content.modifiche_e_aggiunte,
         })
+    }
+    #[must_use]
+    pub fn modified(&self) -> Option<DateTime<Utc>> {
+        self.modified
     }
 }
 

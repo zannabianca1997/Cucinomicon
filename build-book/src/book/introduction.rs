@@ -38,6 +38,9 @@ impl Introduction {
             )
             .context("While parsing")?;
             // adding modified date
+            if content.metas.modified.is_some() {
+                log::warn!("Setted `modified` value in the header will get ignored")
+            }
             content.metas.modified = f
                 .metadata()
                 .and_then(|m| m.modified())
@@ -57,6 +60,8 @@ impl Introduction {
             thanks: load(path.as_ref(), "thanks.md").context("While loading thanks")?,
         })
     }
+
+    #[must_use]
     pub fn modified(&self) -> Option<DateTime<Utc>> {
         let mut modified = DateTime::<Utc>::MIN_UTC;
         for time in [
@@ -77,6 +82,6 @@ impl Introduction {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Metas {
     pub title: Markdown,
-    #[serde(skip_deserializing, skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub modified: Option<DateTime<Utc>>,
 }

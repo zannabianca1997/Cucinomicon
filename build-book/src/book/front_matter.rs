@@ -38,6 +38,8 @@ impl FrontMatter {
             .map(Into::into);
         Ok(frontmatters)
     }
+
+    #[must_use]
     pub fn modified(&self) -> Option<DateTime<Utc>> {
         self.modified
     }
