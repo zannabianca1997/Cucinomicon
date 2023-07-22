@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::path::Path;
 
 use anyhow::Context;
@@ -11,10 +12,14 @@ use self::front_matter::FrontMatter;
 pub mod introduction;
 use self::introduction::Introduction;
 
+pub mod recipe;
+use self::recipe::Recipe;
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Book {
     pub front_matter: FrontMatter,
     pub introduction: Introduction,
+    pub recipes: BTreeMap<String, Recipe>,
 }
 impl Book {
     pub fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
@@ -24,6 +29,8 @@ impl Book {
                 .context("While loading `front_matter.yml`")?,
             introduction: Introduction::load(path.as_ref().join("introduction"))
                 .context("While loading `introduction`")?,
+            recipes: Recipe::load_dir(path.as_ref().join("recipes"))
+                .context("While loading `recipes`")?,
         })
     }
     pub fn modified(&self) -> Option<DateTime<Utc>> {
