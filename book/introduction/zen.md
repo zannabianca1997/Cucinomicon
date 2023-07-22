@@ -17,14 +17,13 @@ TODO: spiega la regola
 
 TODO: spiega la regola
 
+# _Quasi_ è meglio di _No_
+
+TODO: spiega la regola
 # Un buon cuoco preparerà un buon piatto da ottimi ingredienti, un ottimo cuoco preparerà un ottimo piatto da buoni ingredienti
 
 TODO: spiega la regola
 
 # Annusa. Assaggia. Correggi.
-
-TODO: spiega la regola
-
-# La spezia migliore è il divertimento
 
 TODO: spiega la regola

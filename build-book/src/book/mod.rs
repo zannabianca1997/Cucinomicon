@@ -1,44 +1,17 @@
-use std::{borrow::Cow, fmt::Display, fs::File, path::Path, str::FromStr};
+use std::{
+    fs::{read_to_string, File},
+    path::Path,
+};
 
 use anyhow::Context;
-use markdown::mdast;
+use markdown::{Constructs, ParseOptions};
 use serde::{Deserialize, Serialize};
 use serde_email::Email;
 use url::Url;
-use zen::Zen;
 
-#[derive(Debug, Clone)]
-pub struct Markdown(pub mdast::Node);
-impl Display for Markdown {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0.to_string())
-    }
-}
-impl FromStr for Markdown {
-    type Err = !;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let node = markdown::to_mdast(&s, &Default::default())
-            .expect("Traditional markdown should never have errors");
-        Ok(Self(node))
-    }
-}
-impl Serialize for Markdown {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.collect_str(&self)
-    }
-}
-impl<'de> Deserialize<'de> for Markdown {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        Ok(<Cow<'de, str>>::deserialize(deserializer)?.parse().unwrap())
-    }
-}
+use crate::parsers::{
+    headed_md::HeadedMarkdown, markdown::Markdown, title_separated_list::TitleSeparatedList, FromMd,
+};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Book {
@@ -75,15 +48,46 @@ impl FrontMatter {
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Introduction {
-    pub zen: Zen,
+    pub zen: HeadedMarkdown<Metas, TitleSeparatedList<Markdown, Markdown>>,
+    pub prologue: HeadedMarkdown<Metas, Markdown>,
+    pub warnings: HeadedMarkdown<Metas, TitleSeparatedList<Markdown, Markdown>>,
+    pub thanks: HeadedMarkdown<Metas, Markdown>,
 }
 impl Introduction {
     pub fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         log::info!("Loading introduction from {}", path.as_ref().display());
+
+        fn load<T: FromMd>(path: &Path, name: &str) -> anyhow::Result<T> {
+            let path = path.join(name);
+            log::debug!("Loading {}", path.display());
+            anyhow::Ok(
+                FromMd::parse(
+                    markdown::to_mdast(
+                        &read_to_string(path).context("While reading")?,
+                        &ParseOptions {
+                            constructs: Constructs {
+                                frontmatter: true, // needed to load the yaml too
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        },
+                    )
+                    .expect("Normal markdown should always parse"),
+                )
+                .expect("While parsing"),
+            )
+        }
+
         Ok(Self {
-            zen: Zen::load(path.as_ref().join("zen.md")).context("While loading `zen.md`")?,
+            zen: load(path.as_ref(), "zen.md").context("While loading zen")?,
+            prologue: load(path.as_ref(), "prologue.md").context("While loading prologue")?,
+            warnings: load(path.as_ref(), "warnings.md").context("While loading warnings")?,
+            thanks: load(path.as_ref(), "thanks.md").context("While loading thanks")?,
         })
     }
 }
 
-pub mod zen;
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Metas {
+    pub title: Markdown,
+}
