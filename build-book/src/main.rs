@@ -4,14 +4,20 @@ use anyhow::Context;
 use clap::Parser;
 use simple_logger::SimpleLogger;
 
-use build_book::Book;
+use build_book::{frontends::Frontend, Book};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// input directory
+    /// What frontend to use
+    #[command(subcommand)]
+    frontend: Frontend,
+    /// Path to the book directory
     #[clap(short, long)]
     input: PathBuf,
+    /// Path to the output
+    #[clap(short, long)]
+    output: PathBuf,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -22,10 +28,15 @@ fn main() -> anyhow::Result<()> {
         .env()
         .init()
         .context("Cannot init logger")?;
-    let Args { input } = Parser::parse();
+    let Args {
+        frontend,
+        input,
+        output,
+    } = Parser::parse();
     log::info!("Reading book");
     let book = Book::load(input)?;
+    log::info!("Writing output");
+    frontend.emit(book, output)?;
 
-    serde_yaml::to_writer(stdout(), &book).context("While serializing book")?;
     Ok(())
 }
